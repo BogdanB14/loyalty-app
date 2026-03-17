@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:phosphor_flutter/phosphor_flutter.dart';
 import '../../../../core/theme/app_colors.dart';
 
 class SharePointsScreen extends ConsumerWidget {
@@ -15,7 +16,7 @@ class SharePointsScreen extends ConsumerWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            const Icon(Icons.people_outline,
+            Icon(PhosphorIconsRegular.usersThree,
                 size: 64, color: AppColors.primary),
             const SizedBox(height: 16),
             Text(
@@ -54,7 +55,7 @@ class SharePointsScreen extends ConsumerWidget {
               width: double.infinity,
               child: ElevatedButton.icon(
                 onPressed: () {},
-                icon: const Icon(Icons.location_on_outlined),
+                icon: Icon(PhosphorIconsRegular.mapPin),
                 label: const Text('Find Nearby Friends'),
               ),
             ),

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:phosphor_flutter/phosphor_flutter.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 
@@ -45,7 +46,7 @@ class ProfileScreen extends ConsumerWidget {
             child: Column(
               children: [
                 ListTile(
-                  leading: const Icon(Icons.star_rounded,
+                  leading: Icon(PhosphorIconsRegular.star,
                       color: AppColors.secondary),
                   title: const Text('Total Points'),
                   trailing: Text(
@@ -58,7 +59,7 @@ class ProfileScreen extends ConsumerWidget {
                 ),
                 const Divider(height: 1),
                 ListTile(
-                  leading: const Icon(Icons.card_giftcard_outlined,
+                  leading: Icon(PhosphorIconsRegular.gift,
                       color: AppColors.primary),
                   title: const Text('Claimed Rewards'),
                   trailing: const Text('3',
@@ -66,7 +67,7 @@ class ProfileScreen extends ConsumerWidget {
                 ),
                 const Divider(height: 1),
                 ListTile(
-                  leading: const Icon(Icons.receipt_long_outlined,
+                  leading: Icon(PhosphorIconsRegular.receipt,
                       color: AppColors.primary),
                   title: const Text('Receipts Scanned'),
                   trailing: const Text('12',
@@ -80,26 +81,26 @@ class ProfileScreen extends ConsumerWidget {
             child: Column(
               children: [
                 ListTile(
-                  leading:
-                      const Icon(Icons.people_outline, color: AppColors.primary),
+                  leading: Icon(PhosphorIconsRegular.usersThree,
+                      color: AppColors.primary),
                   title: const Text('Friends'),
-                  trailing: const Icon(Icons.chevron_right),
+                  trailing: Icon(PhosphorIconsRegular.caretRight),
                   onTap: () => context.go('/friends'),
                 ),
                 const Divider(height: 1),
                 ListTile(
-                  leading: const Icon(Icons.workspace_premium_outlined,
+                  leading: Icon(PhosphorIconsRegular.trophy,
                       color: AppColors.secondary),
                   title: const Text('Rewards'),
-                  trailing: const Icon(Icons.chevron_right),
+                  trailing: Icon(PhosphorIconsRegular.caretRight),
                   onTap: () => context.go('/rewards'),
                 ),
                 const Divider(height: 1),
                 ListTile(
-                  leading: const Icon(Icons.notifications_outlined,
+                  leading: Icon(PhosphorIconsRegular.bell,
                       color: AppColors.primary),
                   title: const Text('Notifications'),
-                  trailing: const Icon(Icons.chevron_right),
+                  trailing: Icon(PhosphorIconsRegular.caretRight),
                   onTap: () {},
                 ),
               ],
@@ -108,7 +109,7 @@ class ProfileScreen extends ConsumerWidget {
           const SizedBox(height: 24),
           ElevatedButton.icon(
             onPressed: () => ref.read(authProvider.notifier).logout(),
-            icon: const Icon(Icons.logout),
+            icon: Icon(PhosphorIconsRegular.signOut),
             label: const Text('Log Out'),
             style: ElevatedButton.styleFrom(
               backgroundColor: AppColors.error,

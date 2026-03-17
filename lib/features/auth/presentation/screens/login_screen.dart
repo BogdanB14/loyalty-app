@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_sign_in/google_sign_in.dart';
+import 'package:phosphor_flutter/phosphor_flutter.dart';
 import '../../domain/entities/user_entity.dart';
 import '../providers/auth_provider.dart';
 import '../widgets/social_login_button.dart';
@@ -19,7 +20,8 @@ class LoginScreen extends ConsumerWidget {
             mainAxisAlignment: MainAxisAlignment.center,
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              const Icon(Icons.loyalty, size: 80, color: AppColors.primary),
+              Icon(PhosphorIconsRegular.seal,
+                  size: 80, color: AppColors.primary),
               const SizedBox(height: 24),
               Text(
                 'LoyApp',
@@ -38,13 +40,13 @@ class LoginScreen extends ConsumerWidget {
               const SizedBox(height: 56),
               SocialLoginButton(
                 label: 'Continue with Google',
-                icon: Icons.g_mobiledata_rounded,
+                icon: PhosphorIconsRegular.googleLogo,
                 onPressed: () => _loginWithGoogle(context, ref),
               ),
               const SizedBox(height: 16),
               SocialLoginButton(
                 label: 'Continue with Apple',
-                icon: Icons.apple,
+                icon: PhosphorIconsRegular.appleLogo,
                 onPressed: () => _loginWithApple(context, ref),
               ),
               const SizedBox(height: 32),

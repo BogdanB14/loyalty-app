@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
+import 'package:phosphor_flutter/phosphor_flutter.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../widgets/scan_results_sheet.dart';
 
@@ -61,7 +62,7 @@ class _ScanScreenState extends ConsumerState<ScanScreen> {
         title: const Text('Scan Receipt'),
         actions: [
           IconButton(
-            icon: const Icon(Icons.flash_on),
+            icon: Icon(PhosphorIconsRegular.lightning),
             onPressed: () => _controller.toggleTorch(),
           ),
         ],

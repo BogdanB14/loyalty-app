@@ -1,36 +1,37 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:phosphor_flutter/phosphor_flutter.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 
-const _mockRewards = [
+final _mockRewards = [
   {
     'name': 'Free Coffee',
     'venue': 'Caffe Bar Lav',
     'points': 100,
     'description': 'One espresso or filter coffee',
-    'icon': Icons.local_cafe_outlined,
+    'icon': PhosphorIconsRegular.coffee,
   },
   {
     'name': 'Free Dessert',
     'venue': 'Kafana Zlatni Bor',
     'points': 200,
     'description': 'Choose any dessert from the menu',
-    'icon': Icons.cake_outlined,
+    'icon': PhosphorIconsRegular.cake,
   },
   {
     'name': 'Free Fries',
     'venue': 'McBurger Beograd',
     'points': 150,
     'description': 'Medium portion of fries',
-    'icon': Icons.fastfood_outlined,
+    'icon': PhosphorIconsRegular.hamburger,
   },
   {
     'name': '10% Discount',
     'venue': 'Restoran Šaran',
     'points': 300,
     'description': 'On your total bill',
-    'icon': Icons.discount_outlined,
+    'icon': PhosphorIconsRegular.tag,
   },
 ];
 
@@ -49,7 +50,8 @@ class RewardsScreen extends ConsumerWidget {
             padding: const EdgeInsets.only(right: 16),
             child: Row(
               children: [
-                const Icon(Icons.star, color: AppColors.secondary, size: 18),
+                Icon(PhosphorIconsRegular.star,
+                    color: AppColors.secondary, size: 18),
                 const SizedBox(width: 4),
                 Text('$userPoints pts',
                     style: const TextStyle(

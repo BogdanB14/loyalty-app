@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:phosphor_flutter/phosphor_flutter.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../widgets/venue_card.dart';
 
@@ -50,16 +51,17 @@ class HomeScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     return Scaffold(
       appBar: AppBar(
-        title: const Row(
+        title: Row(
           children: [
-            Icon(Icons.loyalty, color: AppColors.primary, size: 22),
-            SizedBox(width: 8),
-            Text('LoyApp'),
+            Icon(PhosphorIconsRegular.seal,
+                color: AppColors.primary, size: 22),
+            const SizedBox(width: 8),
+            const Text('LoyApp'),
           ],
         ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.notifications_outlined),
+            icon: Icon(PhosphorIconsRegular.bell),
             onPressed: () {},
           ),
         ],

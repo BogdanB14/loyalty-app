@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:phosphor_flutter/phosphor_flutter.dart';
 import '../../../../core/theme/app_colors.dart';
 
 const _mockFriends = [
@@ -18,7 +19,7 @@ class FriendsScreen extends ConsumerWidget {
         title: const Text('Friends'),
         actions: [
           IconButton(
-            icon: const Icon(Icons.person_add_outlined),
+            icon: Icon(PhosphorIconsRegular.userPlus),
             onPressed: () => _showAddFriend(context),
           ),
         ],
@@ -144,9 +145,9 @@ class _SharedHistoryTile extends StatelessWidget {
               padding: const EdgeInsets.all(10),
               decoration: BoxDecoration(
                 color: AppColors.surfaceVariant,
-                borderRadius: BorderRadius.circular(10),
+                borderRadius: BorderRadius.circular(12),
               ),
-              child: const Icon(Icons.people_outline,
+              child: Icon(PhosphorIconsRegular.usersThree,
                   color: AppColors.primary, size: 20),
             ),
             const SizedBox(width: 12),

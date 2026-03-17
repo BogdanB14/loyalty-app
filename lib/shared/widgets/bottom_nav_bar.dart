@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:phosphor_flutter/phosphor_flutter.dart';
 import '../../core/theme/app_colors.dart';
 
 class MainShell extends StatelessWidget {
@@ -12,15 +13,27 @@ class MainShell extends StatelessWidget {
     required this.location,
   });
 
-  static const _destinations = [
-    _NavDest(label: 'Home', icon: Icons.home_outlined, route: '/home'),
-    _NavDest(label: 'Search', icon: Icons.search, route: '/search'),
-    _NavDest(label: 'Scan', icon: Icons.qr_code_scanner, route: '/scan'),
+  static final _destinations = [
+    _NavDest(
+        label: 'Home',
+        icon: PhosphorIconsRegular.house,
+        route: '/home'),
+    _NavDest(
+        label: 'Search',
+        icon: PhosphorIconsRegular.magnifyingGlass,
+        route: '/search'),
+    _NavDest(
+        label: 'Scan',
+        icon: PhosphorIconsRegular.qrCode,
+        route: '/scan'),
     _NavDest(
         label: 'Progress',
-        icon: Icons.bar_chart_outlined,
+        icon: PhosphorIconsRegular.chartBar,
         route: '/progress'),
-    _NavDest(label: 'Profile', icon: Icons.person_outline, route: '/profile'),
+    _NavDest(
+        label: 'Profile',
+        icon: PhosphorIconsRegular.user,
+        route: '/profile'),
   ];
 
   int get _currentIndex {

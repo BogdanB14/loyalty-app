@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
+import 'package:phosphor_flutter/phosphor_flutter.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/theme/app_text_styles.dart';
 import '../widgets/venue_card.dart';
 
 const _allVenues = [
@@ -70,9 +73,9 @@ class SearchScreen extends ConsumerWidget {
             child: TextField(
               onChanged: (v) =>
                   ref.read(_searchQueryProvider.notifier).state = v,
-              decoration: const InputDecoration(
+              decoration: InputDecoration(
                 hintText: 'Search venues...',
-                prefixIcon: Icon(Icons.search),
+                prefixIcon: Icon(PhosphorIconsRegular.magnifyingGlass),
               ),
             ),
           ),
@@ -108,16 +111,20 @@ class SearchScreen extends ConsumerWidget {
             child: filtered.isEmpty
                 ? Center(
                     child: Text('No venues found',
-                        style: Theme.of(context).textTheme.bodyMedium))
+                        style: AppTextStyles.bodyMedium))
                 : ListView.builder(
                     padding: const EdgeInsets.symmetric(horizontal: 16),
                     itemCount: filtered.length,
-                    itemBuilder: (_, i) => VenueCard(
-                      name: filtered[i]['name']!,
-                      promotion: filtered[i]['promotion']!,
-                      distance: filtered[i]['distance']!,
-                      category: filtered[i]['category']!,
-                    ),
+                    itemBuilder: (context, i) {
+                      final venueIndex = _allVenues.indexOf(filtered[i]);
+                      return VenueCard(
+                        name: filtered[i]['name']!,
+                        promotion: filtered[i]['promotion']!,
+                        distance: filtered[i]['distance']!,
+                        category: filtered[i]['category']!,
+                        onTap: () => context.push('/venue/$venueIndex'),
+                      );
+                    },
                   ),
           ),
         ],
@@ -142,16 +149,14 @@ class _FilterChip extends StatelessWidget {
         duration: const Duration(milliseconds: 150),
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         decoration: BoxDecoration(
-          color:
-              selected ? AppColors.primary : AppColors.surfaceVariant,
+          color: selected ? AppColors.accentGold : AppColors.backgroundTertiary,
           borderRadius: BorderRadius.circular(20),
         ),
         child: Text(
           label,
-          style: TextStyle(
-            color: selected ? AppColors.onPrimary : AppColors.onSurface,
-            fontWeight: selected ? FontWeight.bold : FontWeight.normal,
-            fontSize: 13,
+          style: AppTextStyles.labelSmall.copyWith(
+            color: selected ? AppColors.onPrimary : AppColors.textSecondary,
+            fontWeight: selected ? FontWeight.w600 : FontWeight.w400,
           ),
         ),
       ),

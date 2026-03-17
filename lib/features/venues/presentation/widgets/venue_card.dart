@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:phosphor_flutter/phosphor_flutter.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/theme/app_text_styles.dart';
 
 class VenueCard extends StatelessWidget {
   final String name;
@@ -20,13 +22,13 @@ class VenueCard extends StatelessWidget {
   IconData get _categoryIcon {
     switch (category) {
       case 'cafe':
-        return Icons.local_cafe_outlined;
+        return PhosphorIconsRegular.coffee;
       case 'bar':
-        return Icons.local_bar_outlined;
+        return PhosphorIconsRegular.wine;
       case 'fastfood':
-        return Icons.fastfood_outlined;
+        return PhosphorIconsRegular.hamburger;
       default:
-        return Icons.restaurant_outlined;
+        return PhosphorIconsRegular.forkKnife;
     }
   }
 
@@ -45,32 +47,31 @@ class VenueCard extends StatelessWidget {
                 width: 56,
                 height: 56,
                 decoration: BoxDecoration(
-                  color: AppColors.surfaceVariant,
+                  color: AppColors.backgroundTertiary,
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: Icon(_categoryIcon, color: AppColors.primary),
+                child: Icon(_categoryIcon, color: AppColors.accentGold),
               ),
               const SizedBox(width: 16),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(name,
-                        style: Theme.of(context).textTheme.titleMedium),
+                    Text(name, style: AppTextStyles.titleMedium),
                     if (promotion.isNotEmpty) ...[
                       const SizedBox(height: 4),
                       Row(
                         children: [
-                          const Icon(Icons.local_fire_department,
-                              size: 14, color: AppColors.secondary),
+                          Icon(PhosphorIconsRegular.flame,
+                              size: 14, color: AppColors.accentGoldLight),
                           const SizedBox(width: 4),
                           Expanded(
-                            child: Text(promotion,
-                                style: Theme.of(context)
-                                    .textTheme
-                                    .bodySmall
-                                    ?.copyWith(color: AppColors.secondary),
-                                overflow: TextOverflow.ellipsis),
+                            child: Text(
+                              promotion,
+                              style: AppTextStyles.bodyMedium.copyWith(
+                                  color: AppColors.accentGoldLight),
+                              overflow: TextOverflow.ellipsis,
+                            ),
                           ),
                         ],
                       ),
@@ -79,18 +80,16 @@ class VenueCard extends StatelessWidget {
                       const SizedBox(height: 4),
                       Row(
                         children: [
-                          const Icon(Icons.location_on_outlined,
+                          Icon(PhosphorIconsRegular.mapPin,
                               size: 14, color: AppColors.textSecondary),
                           const SizedBox(width: 4),
-                          Text(distance,
-                              style: Theme.of(context).textTheme.bodySmall),
+                          Text(distance, style: AppTextStyles.bodyMedium),
                         ],
                       ),
                     ],
                   ],
                 ),
               ),
-              const Icon(Icons.chevron_right, color: AppColors.textSecondary),
             ],
           ),
         ),

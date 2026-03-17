@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:phosphor_flutter/phosphor_flutter.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 
@@ -51,7 +52,7 @@ class _TotalPointsCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        gradient: LinearGradient(
+        gradient: const LinearGradient(
           colors: [
             Color.fromRGBO(255, 107, 53, 0.8),
             Color.fromRGBO(255, 107, 53, 0.4),
@@ -63,7 +64,8 @@ class _TotalPointsCard extends StatelessWidget {
       ),
       child: Column(
         children: [
-          const Icon(Icons.star_rounded, size: 48, color: AppColors.secondary),
+          Icon(PhosphorIconsRegular.star,
+              size: 48, color: AppColors.secondary),
           const SizedBox(height: 8),
           Text(
             '$points',
@@ -141,7 +143,7 @@ class _VenueProgressCard extends StatelessWidget {
                     style: Theme.of(context).textTheme.bodySmall),
                 Row(
                   children: [
-                    const Icon(Icons.card_giftcard_outlined,
+                    Icon(PhosphorIconsRegular.gift,
                         size: 14, color: AppColors.secondary),
                     const SizedBox(width: 4),
                     Text(nextReward,

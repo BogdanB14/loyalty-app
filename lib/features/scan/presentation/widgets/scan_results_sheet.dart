@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:phosphor_flutter/phosphor_flutter.dart';
 import '../../../../core/theme/app_colors.dart';
 
 class ScanResultsSheet extends StatelessWidget {
@@ -36,12 +37,12 @@ class ScanResultsSheet extends StatelessWidget {
           Container(
             width: 72,
             height: 72,
-            decoration: BoxDecoration(
+            decoration: const BoxDecoration(
               color: Color.fromRGBO(255, 107, 53, 0.15),
               shape: BoxShape.circle,
             ),
-            child:
-                const Icon(Icons.check, size: 40, color: AppColors.primary),
+            child: Icon(PhosphorIconsRegular.check,
+                size: 40, color: AppColors.primary),
           ),
           const SizedBox(height: 16),
           Text(
@@ -65,7 +66,7 @@ class ScanResultsSheet extends StatelessWidget {
           const SizedBox(height: 8),
           TextButton.icon(
             onPressed: () {},
-            icon: const Icon(Icons.people_outline, size: 18),
+            icon: Icon(PhosphorIconsRegular.usersThree, size: 18),
             label: const Text('Share points with friends'),
           ),
           const SizedBox(height: 16),

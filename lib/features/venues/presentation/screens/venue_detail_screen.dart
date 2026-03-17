@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:phosphor_flutter/phosphor_flutter.dart';
 import '../../../../core/theme/app_colors.dart';
 
 class VenueDetailScreen extends StatelessWidget {
@@ -19,10 +20,10 @@ class VenueDetailScreen extends StatelessWidget {
               width: double.infinity,
               decoration: BoxDecoration(
                 color: AppColors.surfaceVariant,
-                borderRadius: BorderRadius.circular(16),
+                borderRadius: BorderRadius.circular(12),
               ),
-              child: const Center(
-                child: Icon(Icons.restaurant_outlined,
+              child: Center(
+                child: Icon(PhosphorIconsRegular.forkKnife,
                     size: 72, color: AppColors.primary),
               ),
             ),
@@ -32,13 +33,13 @@ class VenueDetailScreen extends StatelessWidget {
             const SizedBox(height: 4),
             Row(
               children: [
-                const Icon(Icons.location_on_outlined,
+                Icon(PhosphorIconsRegular.mapPin,
                     size: 16, color: AppColors.textSecondary),
                 const SizedBox(width: 4),
                 Text('Beograd, Srbija',
                     style: Theme.of(context).textTheme.bodySmall),
                 const SizedBox(width: 12),
-                const Icon(Icons.directions_walk,
+                Icon(PhosphorIconsRegular.personSimpleWalk,
                     size: 16, color: AppColors.textSecondary),
                 const SizedBox(width: 4),
                 Text('0.3 km',
@@ -62,11 +63,11 @@ class VenueDetailScreen extends StatelessWidget {
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
                 color: AppColors.surfaceVariant,
-                borderRadius: BorderRadius.circular(10),
+                borderRadius: BorderRadius.circular(12),
               ),
               child: Row(
                 children: [
-                  const Icon(Icons.calculate_outlined,
+                  Icon(PhosphorIconsRegular.calculator,
                       color: AppColors.primary, size: 20),
                   const SizedBox(width: 12),
                   Text('points = bill × 0.1',
@@ -101,7 +102,7 @@ class VenueDetailScreen extends StatelessWidget {
       ),
       child: Row(
         children: [
-          const Icon(Icons.local_fire_department, color: AppColors.secondary),
+          Icon(PhosphorIconsRegular.flame, color: AppColors.secondary),
           const SizedBox(width: 12),
           Expanded(
             child: Column(
@@ -126,7 +127,7 @@ class VenueDetailScreen extends StatelessWidget {
       padding: const EdgeInsets.only(bottom: 10),
       child: Row(
         children: [
-          const Icon(Icons.card_giftcard_outlined,
+          Icon(PhosphorIconsRegular.gift,
               size: 20, color: AppColors.secondary),
           const SizedBox(width: 12),
           Expanded(
