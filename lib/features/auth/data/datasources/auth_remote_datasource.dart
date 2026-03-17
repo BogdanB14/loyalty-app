@@ -5,7 +5,7 @@ import '../models/user_model.dart';
 
 abstract class AuthRemoteDataSource {
   Future<UserModel> loginWithGoogle(String idToken);
-  Future<UserModel> loginWithApple(String identityToken);
+  Future<UserModel> loginWithEmailPassword(String identifier, String password);
 }
 
 class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
@@ -14,23 +14,31 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
 
   @override
   Future<UserModel> loginWithGoogle(String idToken) async {
-    final response = await dio.post(
+    // Step 1: authenticate and get token
+    final authResponse = await dio.post(
       ApiConstants.googleLogin,
       data: {'idToken': idToken},
     );
-    final token = response.data['token'] as String;
-    await SecureStorage.saveToken(token);
-    return UserModel.fromJson(response.data['user'] as Map<String, dynamic>);
+    final accessToken = authResponse.data['accessToken'] as String;
+    await SecureStorage.saveToken(accessToken);
+
+    // Step 2: fetch customer profile with the new token
+    final profileResponse = await dio.get(ApiConstants.customerMe);
+    return UserModel.fromJson(profileResponse.data as Map<String, dynamic>);
   }
 
   @override
-  Future<UserModel> loginWithApple(String identityToken) async {
-    final response = await dio.post(
-      '/auth/apple',
-      data: {'identityToken': identityToken},
+  Future<UserModel> loginWithEmailPassword(String identifier, String password) async {
+    // Step 1: authenticate
+    final authResponse = await dio.post(
+      ApiConstants.customerLogin,
+      data: {'identifier': identifier, 'password': password},
     );
-    final token = response.data['token'] as String;
-    await SecureStorage.saveToken(token);
-    return UserModel.fromJson(response.data['user'] as Map<String, dynamic>);
+    final accessToken = authResponse.data['accessToken'] as String;
+    await SecureStorage.saveToken(accessToken);
+
+    // Step 2: fetch customer profile
+    final profileResponse = await dio.get(ApiConstants.customerMe);
+    return UserModel.fromJson(profileResponse.data as Map<String, dynamic>);
   }
 }

@@ -69,7 +69,7 @@ dev_dependencies:
   # Splash Screen
   flutter_native_splash: ^2.3.9
 
-flutter_icons:
+flutter_launcher_icons:
   android: true
   ios: true
   image_path: "assets/icon/app_icon.png"

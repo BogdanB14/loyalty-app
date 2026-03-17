@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-
 import 'core/theme/app_theme.dart';
 import 'features/auth/presentation/providers/auth_provider.dart';
 import 'features/auth/presentation/screens/login_screen.dart';
+import 'shared/widgets/loading_widget.dart';
 import 'features/venues/presentation/screens/home_screen.dart';
 import 'features/venues/presentation/screens/search_screen.dart';
 import 'features/venues/presentation/screens/venue_detail_screen.dart';
@@ -15,20 +15,67 @@ import 'features/profile/presentation/screens/profile_screen.dart';
 import 'features/friends/presentation/screens/friends_screen.dart';
 import 'shared/widgets/bottom_nav_bar.dart';
 
-final routerProvider = Provider<GoRouter>((ref) {
+// A ChangeNotifier that listens to Riverpod AuthState changes
+// and notifies GoRouter to re-evaluate redirects.
+class _AuthNotifierListener extends ChangeNotifier {
+  AuthState _state;
+  _AuthNotifierListener(this._state);
+
+  void update(AuthState newState) {
+    if (newState.isLoading != _state.isLoading ||
+        newState.isAuthenticated != _state.isAuthenticated) {
+      _state = newState;
+      notifyListeners();
+    }
+  }
+
+  AuthState get state => _state;
+}
+
+final _authListenerProvider =
+    ChangeNotifierProvider<_AuthNotifierListener>((ref) {
   final authState = ref.watch(authProvider);
+  final notifier = _AuthNotifierListener(authState);
+  ref.listen<AuthState>(authProvider, (_, next) {
+    notifier.update(next);
+  });
+  return notifier;
+});
 
-  return GoRouter(
-    initialLocation: '/home',
+final routerProvider = Provider<GoRouter>((ref) {
+  final authListener = ref.watch(_authListenerProvider);
+
+  final router = GoRouter(
+    initialLocation: '/login',
+    refreshListenable: authListener,
     redirect: (context, state) {
+      final authState = authListener.state;
+      final isLoading = authState.isLoading;
       final isLoggedIn = authState.isAuthenticated;
-      final isLoginPage = state.matchedLocation == '/login';
+      final location = state.matchedLocation;
 
-      if (!isLoggedIn && !isLoginPage) return '/login';
-      if (isLoggedIn && isLoginPage) return '/home';
+      // While checking auth on startup, show splash
+      if (isLoading) {
+        return location == '/splash' ? null : '/splash';
+      }
+
+      // Not logged in — go to login
+      if (!isLoggedIn) {
+        return location == '/login' ? null : '/login';
+      }
+
+      // Logged in — leave splash or login, go home
+      if (location == '/splash' || location == '/login') {
+        return '/home';
+      }
+
       return null;
     },
     routes: [
+      GoRoute(
+        path: '/splash',
+        builder: (_, __) => const Scaffold(body: LoadingWidget()),
+      ),
       GoRoute(
         path: '/login',
         builder: (ctx, _) => const LoginScreen(),
@@ -39,34 +86,13 @@ final routerProvider = Provider<GoRouter>((ref) {
           child: child,
         ),
         routes: [
-          GoRoute(
-            path: '/home',
-            builder: (_, __) => const HomeScreen(),
-          ),
-          GoRoute(
-            path: '/search',
-            builder: (_, __) => const SearchScreen(),
-          ),
-          GoRoute(
-            path: '/scan',
-            builder: (_, __) => const ScanScreen(),
-          ),
-          GoRoute(
-            path: '/progress',
-            builder: (_, __) => const ProgressScreen(),
-          ),
-          GoRoute(
-            path: '/rewards',
-            builder: (_, __) => const RewardsScreen(),
-          ),
-          GoRoute(
-            path: '/profile',
-            builder: (_, __) => const ProfileScreen(),
-          ),
-          GoRoute(
-            path: '/friends',
-            builder: (_, __) => const FriendsScreen(),
-          ),
+          GoRoute(path: '/home', builder: (_, __) => const HomeScreen()),
+          GoRoute(path: '/search', builder: (_, __) => const SearchScreen()),
+          GoRoute(path: '/scan', builder: (_, __) => const ScanScreen()),
+          GoRoute(path: '/progress', builder: (_, __) => const ProgressScreen()),
+          GoRoute(path: '/rewards', builder: (_, __) => const RewardsScreen()),
+          GoRoute(path: '/profile', builder: (_, __) => const ProfileScreen()),
+          GoRoute(path: '/friends', builder: (_, __) => const FriendsScreen()),
           GoRoute(
             path: '/venue/:id',
             builder: (_, state) => VenueDetailScreen(
@@ -77,6 +103,8 @@ final routerProvider = Provider<GoRouter>((ref) {
       ),
     ],
   );
+
+  return router;
 });
 
 class LoyApp extends ConsumerWidget {

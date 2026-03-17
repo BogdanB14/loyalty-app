@@ -2,53 +2,19 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
+import 'package:shimmer/shimmer.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../shared/widgets/error_widget.dart';
+import '../providers/venue_provider.dart';
 import '../widgets/venue_card.dart';
-
-const _mockVenues = [
-  {
-    'name': 'Kafana Zlatni Bor',
-    'promotion': 'Double points this weekend!',
-    'distance': '0.3 km',
-    'category': 'restaurant',
-  },
-  {
-    'name': 'Caffe Bar Lav',
-    'promotion': 'Happy hour 15:00–18:00',
-    'distance': '0.7 km',
-    'category': 'bar',
-  },
-  {
-    'name': 'Restoran Šaran',
-    'promotion': 'Free dessert with 500 pts',
-    'distance': '1.1 km',
-    'category': 'restaurant',
-  },
-  {
-    'name': 'McBurger Beograd',
-    'promotion': '',
-    'distance': '1.4 km',
-    'category': 'fastfood',
-  },
-  {
-    'name': 'Kafeterija Roma',
-    'promotion': 'Loyalty bonus x2 Fridays',
-    'distance': '1.8 km',
-    'category': 'cafe',
-  },
-  {
-    'name': 'Pivnica Kod Dragana',
-    'promotion': '',
-    'distance': '2.2 km',
-    'category': 'bar',
-  },
-];
 
 class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final state = ref.watch(venueProvider);
+
     return Scaffold(
       appBar: AppBar(
         title: Row(
@@ -83,26 +49,66 @@ class HomeScreen extends ConsumerWidget {
               ),
             ),
           ),
-          SliverPadding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            sliver: SliverList(
-              delegate: SliverChildBuilderDelegate(
-                (context, i) {
-                  final v = _mockVenues[i];
-                  return VenueCard(
-                    name: v['name']!,
-                    promotion: v['promotion']!,
-                    distance: v['distance']!,
-                    category: v['category']!,
-                    onTap: () => context.push('/venue/$i'),
-                  );
-                },
-                childCount: _mockVenues.length,
+          if (state.isLoading)
+            SliverPadding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              sliver: SliverList(
+                delegate: SliverChildBuilderDelegate(
+                  (context, _) => const _ShimmerCard(),
+                  childCount: 3,
+                ),
+              ),
+            )
+          else if (state.error != null)
+            SliverFillRemaining(
+              child: AppErrorWidget(
+                message: 'Failed to load venues',
+                onRetry: () =>
+                    ref.read(venueProvider.notifier).loadVenues(),
+              ),
+            )
+          else
+            SliverPadding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              sliver: SliverList(
+                delegate: SliverChildBuilderDelegate(
+                  (context, i) {
+                    final v = state.venues[i];
+                    return VenueCard(
+                      name: v.name,
+                      promotion: '',
+                      distance: '',
+                      // TODO: update UI
+                      category: v.type.toLowerCase(),
+                      onTap: () => context.push('/venue/${v.id}'),
+                    );
+                  },
+                  childCount: state.venues.length,
+                ),
               ),
             ),
-          ),
           const SliverPadding(padding: EdgeInsets.only(bottom: 16)),
         ],
+      ),
+    );
+  }
+}
+
+class _ShimmerCard extends StatelessWidget {
+  const _ShimmerCard();
+
+  @override
+  Widget build(BuildContext context) {
+    return Shimmer.fromColors(
+      baseColor: AppColors.backgroundSecondary,
+      highlightColor: AppColors.backgroundTertiary,
+      child: Container(
+        height: 88,
+        margin: const EdgeInsets.only(bottom: 12),
+        decoration: BoxDecoration(
+          color: AppColors.backgroundSecondary,
+          borderRadius: BorderRadius.circular(16),
+        ),
       ),
     );
   }

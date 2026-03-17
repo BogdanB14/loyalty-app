@@ -13,7 +13,8 @@ class AuthRepositoryImpl implements AuthRepository {
 
   @override
   Future<UserEntity> loginWithApple(String identityToken) =>
-      remoteDataSource.loginWithApple(identityToken);
+      // TODO: update UI — loginWithApple removed from AuthRemoteDataSource
+      throw UnimplementedError('loginWithApple not yet implemented');
 
   @override
   Future<void> logout() async {
