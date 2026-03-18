@@ -1,9 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../domain/entities/user_entity.dart';
-import '../../data/models/user_model.dart';
 import '../../../../core/storage/secure_storage.dart';
-import '../../../../core/network/api_client.dart';
-import '../../../../core/constants/api_constants.dart';
+import '../../data/repositories/auth_repository_impl.dart';
 
 class AuthState {
   final UserEntity? user;
@@ -30,14 +28,14 @@ class AuthNotifier extends StateNotifier<AuthState> {
   }
 
   Future<void> _checkAuth() async {
-    final token = await SecureStorage.getToken();
-    if (token == null) return;
-
     state = state.copyWith(isLoading: true);
     try {
-      final dio = _ref.read(dioProvider);
-      final response = await dio.get(ApiConstants.customerMe);
-      final user = UserModel.fromJson(response.data as Map<String, dynamic>);
+      final repository = _ref.read(authRepositoryProvider);
+      final user = await repository.getCurrentUser();
+      if (user == null) {
+        state = const AuthState();
+        return;
+      }
       state = state.copyWith(user: user, isLoading: false);
     } catch (_) {
       await SecureStorage.deleteToken();

@@ -101,7 +101,9 @@ class ProfileScreen extends ConsumerWidget {
                       color: AppColors.primary),
                   title: const Text('Notifications'),
                   trailing: Icon(PhosphorIconsRegular.caretRight),
-                  onTap: () {},
+                  onTap: () => ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Coming soon')),
+                  ),
                 ),
               ],
             ),

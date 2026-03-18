@@ -1,15 +1,100 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/network/api_client.dart';
+import '../../../../shared/widgets/loading_widget.dart';
+import '../../../../shared/widgets/error_widget.dart';
+import '../../data/datasources/venue_remote_datasource.dart';
+import '../../data/models/venue_model.dart';
+import '../../../rewards/data/models/reward_model.dart';
 
-class VenueDetailScreen extends StatelessWidget {
+class VenueDetailScreen extends ConsumerStatefulWidget {
   final String venueId;
   const VenueDetailScreen({super.key, required this.venueId});
 
   @override
+  ConsumerState<VenueDetailScreen> createState() => _VenueDetailScreenState();
+}
+
+class _VenueDetailScreenState extends ConsumerState<VenueDetailScreen> {
+  bool _isLoading = true;
+  String? _error;
+  VenueModel? _venue;
+  List<RewardModel> _rewards = [];
+  int _pointBalance = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    _load();
+  }
+
+  Future<void> _load() async {
+    setState(() {
+      _isLoading = true;
+      _error = null;
+    });
+    try {
+      final ds = VenueRemoteDataSourceImpl(ref.read(dioProvider));
+      final data = await ds.getVenueWithRewards(widget.venueId);
+
+      // Venue fields — try nested 'venue' key first, fall back to root
+      final venueMap = (data['venue'] as Map<String, dynamic>?) ?? data;
+      final venue = VenueModel.fromJson(venueMap);
+
+      // Rewards — may be a List or a paginated object {content: [...]}
+      final rawRewards = data['rewards'];
+      List<dynamic> rewardList = const [];
+      if (rawRewards is List) {
+        rewardList = rawRewards;
+      } else if (rawRewards is Map && rawRewards['content'] is List) {
+        rewardList = rawRewards['content'] as List;
+      }
+      final rewards = rewardList
+          .map((e) => RewardModel.fromJson(e as Map<String, dynamic>))
+          .toList();
+
+      final pointBalance = (data['pointBalance'] as int?) ??
+          (data['customerPointBalance'] as int?) ??
+          0;
+
+      setState(() {
+        _venue = venue;
+        _rewards = rewards;
+        _pointBalance = pointBalance;
+        _isLoading = false;
+      });
+    } catch (e) {
+      setState(() {
+        _error = e.toString();
+        _isLoading = false;
+      });
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
+    if (_isLoading) {
+      return const Scaffold(
+        body: LoadingWidget(),
+      );
+    }
+
+    if (_error != null) {
+      return Scaffold(
+        appBar: AppBar(title: const Text('Venue Details')),
+        body: AppErrorWidget(
+          message: 'Failed to load venue',
+          onRetry: _load,
+        ),
+      );
+    }
+
+    final venue = _venue!;
+
     return Scaffold(
-      appBar: AppBar(title: const Text('Venue Details')),
+      appBar: AppBar(title: Text(venue.name)),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Column(
@@ -28,54 +113,141 @@ class VenueDetailScreen extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 20),
-            Text('Kafana Zlatni Bor',
-                style: Theme.of(context).textTheme.titleLarge),
+            Text(venue.name, style: Theme.of(context).textTheme.titleLarge),
             const SizedBox(height: 4),
             Row(
               children: [
                 Icon(PhosphorIconsRegular.mapPin,
                     size: 16, color: AppColors.textSecondary),
                 const SizedBox(width: 4),
-                Text('Beograd, Srbija',
-                    style: Theme.of(context).textTheme.bodySmall),
-                const SizedBox(width: 12),
-                Icon(PhosphorIconsRegular.personSimpleWalk,
-                    size: 16, color: AppColors.textSecondary),
-                const SizedBox(width: 4),
-                Text('0.3 km',
-                    style: Theme.of(context).textTheme.bodySmall),
+                Expanded(
+                  child: Text(
+                    [venue.address, venue.city]
+                        .where((s) => s.isNotEmpty)
+                        .join(', '),
+                    style: Theme.of(context).textTheme.bodySmall,
+                  ),
+                ),
               ],
             ),
+            if (venue.type.isNotEmpty) ...[
+              const SizedBox(height: 4),
+              Text(venue.type,
+                  style: Theme.of(context)
+                      .textTheme
+                      .bodySmall
+                      ?.copyWith(color: AppColors.textSecondary)),
+            ],
+            const SizedBox(height: 16),
+            _PointsBalanceCard(pointBalance: _pointBalance),
             const SizedBox(height: 20),
-            _sectionHeader('Active Promotion'),
+            Text('Rewards', style: Theme.of(context).textTheme.titleMedium),
             const SizedBox(height: 8),
-            _promoCard(context),
-            const SizedBox(height: 20),
-            _sectionHeader('Rewards'),
-            const SizedBox(height: 8),
-            _rewardRow(context, 'Free Coffee', 100),
-            _rewardRow(context, 'Free Dessert', 200),
-            _rewardRow(context, '10% Discount', 300),
-            const SizedBox(height: 20),
-            _sectionHeader('Point Formula'),
-            const SizedBox(height: 8),
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: AppColors.surfaceVariant,
-                borderRadius: BorderRadius.circular(12),
+            if (_rewards.isEmpty)
+              Text('No rewards available',
+                  style: Theme.of(context)
+                      .textTheme
+                      .bodySmall
+                      ?.copyWith(color: AppColors.textSecondary))
+            else
+              for (final reward in _rewards) _RewardCard(reward: reward),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _PointsBalanceCard extends StatelessWidget {
+  final int pointBalance;
+  const _PointsBalanceCard({required this.pointBalance});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: AppColors.backgroundSecondary,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: AppColors.accentGold),
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Row(
+            children: [
+              Icon(PhosphorIconsRegular.star,
+                  color: AppColors.accentGold, size: 20),
+              const SizedBox(width: 8),
+              Text('Your points here',
+                  style: Theme.of(context).textTheme.bodyMedium),
+            ],
+          ),
+          Text(
+            '$pointBalance pts',
+            style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                  color: AppColors.accentGold,
+                  fontWeight: FontWeight.bold,
+                ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _RewardCard extends StatelessWidget {
+  final RewardModel reward;
+  const _RewardCard({required this.reward});
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      margin: const EdgeInsets.only(bottom: 12),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Expanded(
+                  child: Text(reward.title,
+                      style: Theme.of(context).textTheme.titleMedium),
+                ),
+                Text(
+                  '${reward.pointsCost} pts',
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        color: AppColors.accentGold,
+                        fontWeight: FontWeight.bold,
+                      ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 6),
+            Text(reward.description,
+                style: Theme.of(context).textTheme.bodySmall),
+            if (reward.quantity != null) ...[
+              const SizedBox(height: 4),
+              Text('Stock: ${reward.quantity}',
+                  style: Theme.of(context).textTheme.bodySmall),
+            ],
+            if (reward.expiresAt != null) ...[
+              const SizedBox(height: 4),
+              Text(
+                'Valid until: ${_formatDate(reward.expiresAt!)}',
+                style: Theme.of(context).textTheme.bodySmall,
               ),
-              child: Row(
-                children: [
-                  Icon(PhosphorIconsRegular.calculator,
-                      color: AppColors.primary, size: 20),
-                  const SizedBox(width: 12),
-                  Text('points = bill × 0.1',
-                      style: Theme.of(context)
-                          .textTheme
-                          .bodyMedium
-                          ?.copyWith(fontFamily: 'monospace')),
-                ],
+            ],
+            const SizedBox(height: 12),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: () => ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Coming soon')),
+                ),
+                child: const Text('Claim'),
               ),
             ),
           ],
@@ -84,60 +256,6 @@ class VenueDetailScreen extends StatelessWidget {
     );
   }
 
-  Widget _sectionHeader(String title) {
-    return Text(title,
-        style: const TextStyle(
-            color: AppColors.onSurface,
-            fontWeight: FontWeight.w600,
-            fontSize: 15));
-  }
-
-  Widget _promoCard(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Color.fromRGBO(255, 107, 53, 0.1),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Color.fromRGBO(255, 107, 53, 0.3)),
-      ),
-      child: Row(
-        children: [
-          Icon(PhosphorIconsRegular.flame, color: AppColors.secondary),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text('Double points this weekend!',
-                    style: TextStyle(
-                        color: AppColors.onSurface,
-                        fontWeight: FontWeight.w600)),
-                Text('Valid Sat & Sun only',
-                    style: Theme.of(context).textTheme.bodySmall),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _rewardRow(BuildContext context, String name, int pts) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 10),
-      child: Row(
-        children: [
-          Icon(PhosphorIconsRegular.gift,
-              size: 20, color: AppColors.secondary),
-          const SizedBox(width: 12),
-          Expanded(
-              child: Text(name,
-                  style: Theme.of(context).textTheme.bodyMedium)),
-          Text('$pts pts',
-              style: const TextStyle(
-                  color: AppColors.secondary, fontWeight: FontWeight.bold)),
-        ],
-      ),
-    );
-  }
+  String _formatDate(DateTime dt) =>
+      '${dt.day.toString().padLeft(2, '0')}.${dt.month.toString().padLeft(2, '0')}.${dt.year}';
 }

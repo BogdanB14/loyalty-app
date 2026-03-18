@@ -54,7 +54,9 @@ class SharePointsScreen extends ConsumerWidget {
             SizedBox(
               width: double.infinity,
               child: ElevatedButton.icon(
-                onPressed: () {},
+                onPressed: () => ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Coming soon')),
+              ),
                 icon: Icon(PhosphorIconsRegular.mapPin),
                 label: const Text('Find Nearby Friends'),
               ),

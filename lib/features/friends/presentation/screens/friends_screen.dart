@@ -108,7 +108,9 @@ class _FriendTile extends StatelessWidget {
         title: Text(name),
         subtitle: Text('$totalPoints pts total'),
         trailing: TextButton(
-          onPressed: () {},
+          onPressed: () => ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Coming soon')),
+          ),
           child: const Text('Share'),
         ),
       ),

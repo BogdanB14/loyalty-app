@@ -1,68 +1,52 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
+import '../../../../shared/widgets/loading_widget.dart';
+import '../../../../shared/widgets/error_widget.dart';
+import '../providers/venue_provider.dart';
 import '../widgets/venue_card.dart';
 
-const _allVenues = [
-  {
-    'name': 'Kafana Zlatni Bor',
-    'promotion': 'Double points!',
-    'distance': '0.3 km',
-    'category': 'restaurant'
-  },
-  {
-    'name': 'Caffe Bar Lav',
-    'promotion': 'Happy hour',
-    'distance': '0.7 km',
-    'category': 'bar'
-  },
-  {
-    'name': 'Restoran Šaran',
-    'promotion': 'Free dessert',
-    'distance': '1.1 km',
-    'category': 'restaurant'
-  },
-  {
-    'name': 'McBurger Beograd',
-    'promotion': '',
-    'distance': '1.4 km',
-    'category': 'fastfood'
-  },
-  {
-    'name': 'Kafeterija Roma',
-    'promotion': 'Loyalty x2',
-    'distance': '1.8 km',
-    'category': 'cafe'
-  },
-  {
-    'name': 'Pivnica Kod Dragana',
-    'promotion': '',
-    'distance': '2.2 km',
-    'category': 'bar'
-  },
-];
-
-final _searchQueryProvider = StateProvider<String>((ref) => '');
 final _selectedCategoryProvider = StateProvider<String?>((ref) => null);
 
-class SearchScreen extends ConsumerWidget {
+class SearchScreen extends ConsumerStatefulWidget {
   const SearchScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final query = ref.watch(_searchQueryProvider);
+  ConsumerState<SearchScreen> createState() => _SearchScreenState();
+}
+
+class _SearchScreenState extends ConsumerState<SearchScreen> {
+  final _controller = TextEditingController();
+  Timer? _debounce;
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    _debounce?.cancel();
+    super.dispose();
+  }
+
+  void _onQueryChanged(String value) {
+    _debounce?.cancel();
+    _debounce = Timer(const Duration(milliseconds: 400), () {
+      ref.read(venueProvider.notifier).searchVenues(value);
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final state = ref.watch(venueProvider);
     final selectedCategory = ref.watch(_selectedCategoryProvider);
 
-    final filtered = _allVenues.where((v) {
-      final matchesQuery = query.isEmpty ||
-          v['name']!.toLowerCase().contains(query.toLowerCase());
-      final matchesCategory =
-          selectedCategory == null || v['category'] == selectedCategory;
-      return matchesQuery && matchesCategory;
-    }).toList();
+    final venues = selectedCategory == null
+        ? state.venues
+        : state.venues
+            .where((v) => v.type.toLowerCase() == selectedCategory)
+            .toList();
 
     return Scaffold(
       appBar: AppBar(title: const Text('Search')),
@@ -71,8 +55,8 @@ class SearchScreen extends ConsumerWidget {
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
             child: TextField(
-              onChanged: (v) =>
-                  ref.read(_searchQueryProvider.notifier).state = v,
+              controller: _controller,
+              onChanged: _onQueryChanged,
               decoration: InputDecoration(
                 hintText: 'Search venues...',
                 prefixIcon: Icon(PhosphorIconsRegular.magnifyingGlass),
@@ -98,37 +82,49 @@ class SearchScreen extends ConsumerWidget {
                     child: _FilterChip(
                       label: cat[0].toUpperCase() + cat.substring(1),
                       selected: selectedCategory == cat,
-                      onTap: () => ref
-                          .read(_selectedCategoryProvider.notifier)
-                          .state = cat,
+                      onTap: () =>
+                          ref.read(_selectedCategoryProvider.notifier).state =
+                              cat,
                     ),
                   ),
               ],
             ),
           ),
           const SizedBox(height: 12),
-          Expanded(
-            child: filtered.isEmpty
-                ? Center(
-                    child: Text('No venues found',
-                        style: AppTextStyles.bodyMedium))
-                : ListView.builder(
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    itemCount: filtered.length,
-                    itemBuilder: (context, i) {
-                      final venueIndex = _allVenues.indexOf(filtered[i]);
-                      return VenueCard(
-                        name: filtered[i]['name']!,
-                        promotion: filtered[i]['promotion']!,
-                        distance: filtered[i]['distance']!,
-                        category: filtered[i]['category']!,
-                        onTap: () => context.push('/venue/$venueIndex'),
-                      );
-                    },
-                  ),
-          ),
+          Expanded(child: _buildResults(state, venues)),
         ],
       ),
+    );
+  }
+
+  Widget _buildResults(VenueState state, List venues) {
+    if (state.isLoading) return const LoadingWidget();
+
+    if (state.error != null) {
+      return AppErrorWidget(
+        message: 'Failed to load venues',
+        onRetry: () =>
+            ref.read(venueProvider.notifier).searchVenues(_controller.text),
+      );
+    }
+
+    if (venues.isEmpty) {
+      return Center(
+        child: Text('No venues found', style: AppTextStyles.bodyMedium),
+      );
+    }
+
+    return ListView.builder(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      itemCount: venues.length,
+      itemBuilder: (context, i) {
+        final v = venues[i];
+        return VenueCard(
+          name: v.name,
+          category: v.type.toLowerCase(),
+          onTap: () => context.push('/venue/${v.id}'),
+        );
+      },
     );
   }
 }

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shimmer/shimmer.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/utils/tier_utils.dart';
 import '../../../../shared/widgets/error_widget.dart';
 import '../providers/points_provider.dart';
 
@@ -131,8 +132,14 @@ class _VenuePointsCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const tierThreshold = 500;
-    final progress = (balance / tierThreshold).clamp(0.0, 1.0);
+    final tier = TierUtils.currentTier(balance);
+    final tierThreshold = TierUtils.pointsForNextTier(tier);
+    final tierColor = TierUtils.tierColor(tier);
+    final progress =
+        tierThreshold > 0 ? (balance / tierThreshold).clamp(0.0, 1.0) : 1.0;
+    final progressLabel = tierThreshold > 0
+        ? '$balance / $tierThreshold pts to next tier'
+        : 'Max tier reached';
 
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
@@ -158,7 +165,7 @@ class _VenuePointsCard extends StatelessWidget {
               Text(
                 '$balance pts',
                 style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      color: AppColors.accentGold,
+                      color: tierColor,
                       fontWeight: FontWeight.bold,
                     ),
               ),
@@ -171,14 +178,12 @@ class _VenuePointsCard extends StatelessWidget {
               value: progress,
               minHeight: 6,
               backgroundColor: AppColors.backgroundTertiary,
-              valueColor: const AlwaysStoppedAnimation<Color>(
-                AppColors.accentGold,
-              ),
+              valueColor: AlwaysStoppedAnimation<Color>(tierColor),
             ),
           ),
           const SizedBox(height: 6),
           Text(
-            '$balance / $tierThreshold pts to next tier',
+            progressLabel,
             style: Theme.of(context)
                 .textTheme
                 .bodySmall

@@ -65,7 +65,9 @@ class ScanResultsSheet extends StatelessWidget {
           ),
           const SizedBox(height: 8),
           TextButton.icon(
-            onPressed: () {},
+            onPressed: () => ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Coming soon')),
+            ),
             icon: Icon(PhosphorIconsRegular.usersThree, size: 18),
             label: const Text('Share points with friends'),
           ),

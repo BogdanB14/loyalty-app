@@ -61,6 +61,13 @@ class TierUtils {
     }
   }
 
+  static String currentTier(int points) {
+    if (points >= 3000) return 'PLATINUM';
+    if (points >= 1500) return 'GOLD';
+    if (points >= 500) return 'SILVER';
+    return 'BRONZE';
+  }
+
   static double tierMultiplier(String tier) {
     switch (tier.toUpperCase()) {
       case 'BRONZE':

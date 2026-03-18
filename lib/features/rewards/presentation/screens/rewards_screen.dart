@@ -150,7 +150,11 @@ class _RewardCard extends StatelessWidget {
             ),
             const SizedBox(width: 8),
             ElevatedButton(
-              onPressed: canClaim ? () {} : null,
+              onPressed: canClaim
+                  ? () => ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Coming soon')),
+                      )
+                  : null,
               style: ElevatedButton.styleFrom(
                 minimumSize: const Size(72, 36),
                 padding: const EdgeInsets.symmetric(horizontal: 12),
