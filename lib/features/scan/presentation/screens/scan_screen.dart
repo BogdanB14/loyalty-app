@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../data/models/receipt_models.dart';
 import '../widgets/scan_results_sheet.dart';
 
 class ScanScreen extends ConsumerStatefulWidget {
@@ -37,15 +38,12 @@ class _ScanScreenState extends ConsumerState<ScanScreen> {
   }
 
   void _showResults(String qrUrl) {
+    final receiptData = ParsedReceiptData(qrRaw: qrUrl);
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (_) => ScanResultsSheet(
-        qrUrl: qrUrl,
-        points: 120,
-        venueName: 'Kafana Zlatni Bor',
-      ),
+      builder: (_) => ScanResultsSheet(receiptData: receiptData),
     ).then((_) {
       _hasDetected = false;
       _controller.start();

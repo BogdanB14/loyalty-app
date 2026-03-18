@@ -1,44 +1,33 @@
-Build the complete data layer for rewards and friends. No UI changes needed —
-only the data/domain layers so we are ready to wire up when backend is available.
+Two tasks:
 
-REWARDS:
-1. lib/features/rewards/data/datasources/rewards_remote_datasource.dart
-    - getRewardsForVenue(venueId) → GET /api/v1/customer/venues/{venueId}/rewards
-      with pageable params (page=0, size=50). Parse response['rewards'] array.
-    - createRedemption(venueId, rewardId) → POST /api/v1/customer/redemptions/venues/{venueId}/create
-      Body: {rewardId, idempotencyKey: uuid_v4(), customerNote: null}
-      Returns RedemptionRequestDto: {id, status, pointsCostSnapshot, expiresAt}
-    - pollRedemptionStatus(redemptionId) → not a real endpoint yet; return the
-      last known RedemptionRequestDto from local state for now.
+1. Wire friends_screen.dart to FriendsProvider (built in Prompt 3):
+   - Replace all mock friend objects with data from provider.
+   - Show accepted friends list.
+   - Add a tab or section for incoming/outgoing friend requests.
+   - Add a search bar that calls provider.searchCustomers(query) with 400ms debounce.
+   - "Add friend" button on search results → provider.sendRequest(id).
+   - Accept/Decline buttons on incoming requests.
+   - Show LoadingWidget, AppErrorWidget with retry, empty state as needed.
+   - Share button remains SnackBar('Coming soon') — bill splitting is a future feature.
 
-2. lib/features/rewards/domain/repositories/rewards_repository.dart — abstract interface
-3. lib/features/rewards/data/repositories/rewards_repository_impl.dart — implementation
-4. lib/features/rewards/presentation/providers/rewards_provider.dart — StateNotifier
-   with: loadRewardsForVenue(venueId), redeemReward(venueId, rewardId),
-   currentRedemption getter, error state.
+2. Build the receipt submission data layer in scan feature:
+   lib/features/scan/data/datasources/receipt_remote_datasource.dart
+   - claimReceipt({venueId, pib, qrRaw, issuedAt, amount, currency, externalReceiptId})
+     → POST /api/customer/receipts/claim (NOTE: no /v1 in this path)
+     Returns: {receiptId, claimId, status, pointsEarned}
 
-FRIENDS:
-5. lib/features/friends/data/models/friend_model.dart
-   Fields from FriendshipDto: id, otherCustomerId, otherUsername,
-   otherDisplayName, status (PENDING/ACCEPTED/DECLINED/CANCELLED),
-   requestedByMe, respondedAt. Add fromJson/toJson.
+   lib/features/scan/data/repositories/receipt_repository_impl.dart
+   lib/features/scan/presentation/providers/receipt_provider.dart
+   - State: idle / submitting / success(pointsEarned) / error(message)
+   - claimReceipt(parsedQrData) method
 
-6. lib/features/friends/domain/entities/friend_entity.dart — same fields
-
-7. lib/features/friends/data/datasources/friends_remote_datasource.dart
-    - getAcceptedFriends() → GET /api/v1/customer/me/friends/accepted
-    - getIncomingRequests() → GET /api/v1/customer/me/friends/requests/incoming
-    - getOutgoingRequests() → GET /api/v1/customer/me/friends/requests/outgoing
-    - sendFriendRequest(targetCustomerId) → POST /api/v1/customer/me/friends/requests
-    - acceptRequest(friendshipId) → POST /api/v1/customer/me/friends/requests/{id}/accept
-    - declineRequest(friendshipId) → POST /api/v1/customer/me/friends/requests/{id}/decline
-    - cancelRequest(friendshipId) → POST /api/v1/customer/me/friends/requests/{id}/cancel
-    - searchCustomers(query) → GET /api/v1/customer/me/friends/search?q={query}&page=0&size=20
-
-8. lib/features/friends/domain/repositories/friends_repository.dart — abstract
-9. lib/features/friends/data/repositories/friends_repository_impl.dart
-10. lib/features/friends/presentation/providers/friends_provider.dart — StateNotifier
-    with: loadFriends(), loadRequests(), sendRequest(id), acceptRequest(id),
-    declineRequest(id), searchCustomers(query).
-
-All datasources must handle errors using the existing exceptions.dart classes.
+   Then wire scan_results_sheet.dart:
+   - When the sheet opens, automatically call provider.claimReceipt() with
+     the already-parsed QR fields (venueId, pib, qrRaw, issuedAt, amount, currency,
+     externalReceiptId).
+   - Show loading state while submitting.
+   - On success: show pointsEarned prominently (e.g. "+X points earned!").
+   - On error: show the backend error message with a retry button.
+   - On 409 (DuplicateReceiptException): show "This receipt was already claimed"
+     message — do not show retry.
+   - Share points button stays SnackBar('Coming soon').
