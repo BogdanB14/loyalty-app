@@ -39,25 +39,19 @@ class _VenueDetailScreenState extends ConsumerState<VenueDetailScreen> {
       final ds = VenueRemoteDataSourceImpl(ref.read(dioProvider));
       final data = await ds.getVenueWithRewards(widget.venueId);
 
-      // Venue fields — try nested 'venue' key first, fall back to root
-      final venueMap = (data['venue'] as Map<String, dynamic>?) ?? data;
-      final venue = VenueModel.fromJson(venueMap);
+      // Venue fields — flat object at root
+      final venue = VenueModel.fromJson(data);
 
-      // Rewards — may be a List or a paginated object {content: [...]}
+      // Rewards — direct List at root
       final rawRewards = data['rewards'];
-      List<dynamic> rewardList = const [];
-      if (rawRewards is List) {
-        rewardList = rawRewards;
-      } else if (rawRewards is Map && rawRewards['content'] is List) {
-        rewardList = rawRewards['content'] as List;
-      }
-      final rewards = rewardList
-          .map((e) => RewardModel.fromJson(e as Map<String, dynamic>))
-          .toList();
+      final rewardList = rawRewards is List ? rawRewards : <dynamic>[];
+      final rewards = rewardList.map((e) {
+        final r = Map<String, dynamic>.from(e as Map);
+        r['venueId'] = widget.venueId;
+        return RewardModel.fromJson(r);
+      }).toList();
 
-      final pointBalance = (data['pointBalance'] as int?) ??
-          (data['customerPointBalance'] as int?) ??
-          0;
+      final pointBalance = (data['pointBalance'] as int?) ?? 0;
 
       setState(() {
         _venue = venue;
@@ -65,7 +59,9 @@ class _VenueDetailScreenState extends ConsumerState<VenueDetailScreen> {
         _pointBalance = pointBalance;
         _isLoading = false;
       });
-    } catch (e) {
+    } catch (e, stackTrace) {
+      print('VENUE DETAIL ERROR: $e');
+      print('VENUE DETAIL STACK: $stackTrace');
       setState(() {
         _error = e.toString();
         _isLoading = false;

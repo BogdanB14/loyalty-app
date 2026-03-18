@@ -16,16 +16,16 @@ class RewardModel extends RewardEntity {
 
   factory RewardModel.fromJson(Map<String, dynamic> json) => RewardModel(
         id: json['id'] as String,
-        venueId: json['venueId'] as String,
+        venueId: (json['venueId'] as String?) ?? '',
         venueName: json['venueName'] as String?,
-        title: json['title'] as String,
+        title: json['name'] as String,
         description: json['description'] as String,
         pointsCost: json['pointsCost'] as int,
-        quantity: json['quantity'] as int?,
+        quantity: json['stock'] as int?,
         isActive: json['isActive'] as bool? ?? true,
         imageUrl: json['imageUrl'] as String?,
-        expiresAt: json['expiresAt'] != null
-            ? DateTime.parse(json['expiresAt'] as String)
+        expiresAt: json['validTo'] != null
+            ? DateTime.parse(json['validTo'] as String)
             : null,
       );
 

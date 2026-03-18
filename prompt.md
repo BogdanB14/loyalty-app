@@ -1,33 +1,36 @@
-Two tasks:
+venue_detail_screen.dart shows "Failed to load venue" even though the backend
+returns 200 with correct data. The actual API response shape is:
 
-1. Wire friends_screen.dart to FriendsProvider (built in Prompt 3):
-   - Replace all mock friend objects with data from provider.
-   - Show accepted friends list.
-   - Add a tab or section for incoming/outgoing friend requests.
-   - Add a search bar that calls provider.searchCustomers(query) with 400ms debounce.
-   - "Add friend" button on search results → provider.sendRequest(id).
-   - Accept/Decline buttons on incoming requests.
-   - Show LoadingWidget, AppErrorWidget with retry, empty state as needed.
-   - Share button remains SnackBar('Coming soon') — bill splitting is a future feature.
+{
+"id": "uuid",
+"name": "Docker NBG",
+"address": "Mall Blvd 5",
+"city": "Belgrade",
+"pointBalance": 0,
+"rewards": [
+{
+"id": "uuid",
+"name": "Free espresso",
+"description": "Get 1 free espresso with any purchase.",
+"pointsCost": 120,
+"validFrom": "2026-03-17T12:22:02Z",
+"validTo": "2026-06-18T12:22:02Z",
+"stock": 200
+}
+]
+}
 
-2. Build the receipt submission data layer in scan feature:
-   lib/features/scan/data/datasources/receipt_remote_datasource.dart
-   - claimReceipt({venueId, pib, qrRaw, issuedAt, amount, currency, externalReceiptId})
-     → POST /api/customer/receipts/claim (NOTE: no /v1 in this path)
-     Returns: {receiptId, claimId, status, pointsEarned}
+The response is a FLAT object — NOT nested under a "venue" key.
+The rewards array is directly in the root object — NOT paginated, NOT under "content".
 
-   lib/features/scan/data/repositories/receipt_repository_impl.dart
-   lib/features/scan/presentation/providers/receipt_provider.dart
-   - State: idle / submitting / success(pointsEarned) / error(message)
-   - claimReceipt(parsedQrData) method
+Fix venue_detail_screen.dart to parse this exact shape:
+- venue name from response['name']
+- address from response['address']
+- city from response['city']
+- pointBalance from response['pointBalance']
+- rewards from response['rewards'] as a direct List
 
-   Then wire scan_results_sheet.dart:
-   - When the sheet opens, automatically call provider.claimReceipt() with
-     the already-parsed QR fields (venueId, pib, qrRaw, issuedAt, amount, currency,
-     externalReceiptId).
-   - Show loading state while submitting.
-   - On success: show pointsEarned prominently (e.g. "+X points earned!").
-   - On error: show the backend error message with a retry button.
-   - On 409 (DuplicateReceiptException): show "This receipt was already claimed"
-     message — do not show retry.
-   - Share points button stays SnackBar('Coming soon').
+Also check: the screen receives a venueId from GoRouter — confirm it is reading
+the route parameter correctly and passing it to getVenueWithRewards(venueId).
+
+Do not change any other files.

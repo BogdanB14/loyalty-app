@@ -37,10 +37,11 @@ class MainShell extends StatelessWidget {
   ];
 
   int get _currentIndex {
+    if (location == '/friends' || location == '/rewards') return 4;
     for (var i = 0; i < _destinations.length; i++) {
-      if (location.startsWith(_destinations[i].route)) return i;
+      if (location == _destinations[i].route) return i;
     }
-    return 0;
+    return -1;
   }
 
   @override
@@ -56,22 +57,37 @@ class MainShell extends StatelessWidget {
                 border: Border(
                     top: BorderSide(color: AppColors.divider, width: 0.5)),
               ),
-              child: NavigationBar(
-                backgroundColor: AppColors.surface,
-                selectedIndex: _currentIndex,
-                onDestinationSelected: (i) =>
-                    context.go(_destinations[i].route),
-                labelBehavior:
-                    NavigationDestinationLabelBehavior.onlyShowSelected,
-                destinations: _destinations
-                    .map(
-                      (d) => NavigationDestination(
-                        icon: Icon(d.icon, color: AppColors.textSecondary),
-                        selectedIcon: Icon(d.icon, color: AppColors.primary),
-                        label: d.label,
-                      ),
-                    )
-                    .toList(),
+              child: SafeArea(
+                child: SizedBox(
+                  height: 64,
+                  child: Row(
+                    children: List.generate(_destinations.length, (i) {
+                      final d = _destinations[i];
+                      final selected = i == _currentIndex;
+                      final color = selected ? AppColors.primary : AppColors.textSecondary;
+                      return Expanded(
+                        child: InkWell(
+                          onTap: () => context.go(d.route),
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(d.icon, color: color, size: 24),
+                              const SizedBox(height: 4),
+                              Text(
+                                d.label,
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  color: color,
+                                  fontWeight: selected ? FontWeight.w600 : FontWeight.normal,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      );
+                    }),
+                  ),
+                ),
               ),
             ),
     );

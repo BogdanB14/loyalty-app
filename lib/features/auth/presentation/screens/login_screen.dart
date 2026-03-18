@@ -3,11 +3,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
 import '../../domain/entities/user_entity.dart';
-import '../../data/datasources/auth_remote_datasource.dart';
 import '../providers/auth_provider.dart';
 import '../widgets/social_login_button.dart';
 import '../../../../core/theme/app_colors.dart';
-import '../../../../core/network/api_client.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({super.key});
@@ -30,6 +28,15 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // Show any login error as a SnackBar — fires only on changes
+    ref.listen<AuthState>(authProvider, (previous, next) {
+      if (next.loginError != null && next.loginError != previous?.loginError) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Login failed: ${next.loginError}')),
+        );
+      }
+    });
+
     return Scaffold(
       body: SafeArea(
         child: SingleChildScrollView(
@@ -60,16 +67,15 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
               SocialLoginButton(
                 label: 'Continue with Google',
                 icon: PhosphorIconsRegular.googleLogo,
-                onPressed: () => _loginWithGoogle(context, ref),
+                onPressed: _loginWithGoogle,
               ),
               const SizedBox(height: 16),
               SocialLoginButton(
                 label: 'Continue with Apple',
                 icon: PhosphorIconsRegular.appleLogo,
-                onPressed: () => _loginWithApple(context),
+                onPressed: _loginWithApple,
               ),
               const SizedBox(height: 24),
-              // Divider with "or"
               Row(
                 children: [
                   const Expanded(child: Divider(color: AppColors.divider)),
@@ -87,7 +93,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 ],
               ),
               const SizedBox(height: 24),
-              // Email field
               TextField(
                 controller: _identifierController,
                 keyboardType: TextInputType.emailAddress,
@@ -97,7 +102,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 ),
               ),
               const SizedBox(height: 12),
-              // Password field
               TextField(
                 controller: _passwordController,
                 obscureText: _obscurePassword,
@@ -117,30 +121,12 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 ),
               ),
               const SizedBox(height: 16),
-              // Sign in button
               ElevatedButton(
                 onPressed: () => _loginWithEmailPassword(
-                  context,
-                  ref,
                   _identifierController.text.trim(),
                   _passwordController.text,
                 ),
                 child: const Text('Sign in'),
-              ),
-              const SizedBox(height: 24),
-              TextButton(
-                onPressed: () {
-                  // Demo: skip login
-                  ref.read(authProvider.notifier).setUser(
-                        const UserEntity(
-                          id: '1',
-                          name: 'Demo User',
-                          email: 'demo@example.com',
-                          totalPoints: 320,
-                        ),
-                      );
-                },
-                child: const Text('Continue as demo'),
               ),
               const SizedBox(height: 24),
             ],
@@ -150,68 +136,35 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     );
   }
 
-  Future<void> _loginWithGoogle(BuildContext context, WidgetRef ref) async {
-    ref.read(authProvider.notifier).setLoading(true);
+  void _loginWithEmailPassword(String identifier, String password) {
+    if (identifier.isEmpty || password.isEmpty) return;
+    // Delegates entirely to the notifier — safe after widget disposal
+    ref.read(authProvider.notifier).loginWithEmailPassword(identifier, password);
+  }
+
+  Future<void> _loginWithGoogle() async {
+    // Google SDK interaction must stay in the widget (needs a UI context).
+    // The backend call is delegated to the notifier, which runs with a
+    // provider-scoped ref that outlives this widget.
     try {
       final googleSignIn = GoogleSignIn();
       final account = await googleSignIn.signIn();
-      if (account == null) {
-        ref.read(authProvider.notifier).setLoading(false);
-        return;
-      }
+      if (account == null) return;
       final auth = await account.authentication;
       final idToken = auth.idToken;
-      if (idToken == null) {
-        ref.read(authProvider.notifier).setLoading(false);
-        return;
-      }
-      final ds = AuthRemoteDataSourceImpl(ref.read(dioProvider));
-      final user = await ds.loginWithGoogle(idToken);
-      ref.read(authProvider.notifier).setUser(UserEntity(
-            id: user.id,
-            name: user.name,
-            email: user.email,
-            photoUrl: user.photoUrl,
-          ));
+      if (idToken == null) return;
+      // Hand off to notifier — widget may be disposed after this point
+      ref.read(authProvider.notifier).loginWithGoogle(idToken);
     } catch (e) {
-      ref.read(authProvider.notifier).setLoading(false);
-      if (context.mounted) {
+      if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Login failed: $e')),
+          SnackBar(content: Text('Google sign-in failed: $e')),
         );
       }
     }
   }
 
-  Future<void> _loginWithEmailPassword(
-    BuildContext context,
-    WidgetRef ref,
-    String identifier,
-    String password,
-  ) async {
-    if (identifier.isEmpty || password.isEmpty) return;
-    ref.read(authProvider.notifier).setLoading(true);
-    try {
-      final ds = AuthRemoteDataSourceImpl(ref.read(dioProvider));
-      final user = await ds.loginWithEmailPassword(identifier, password);
-      ref.read(authProvider.notifier).setUser(UserEntity(
-            id: user.id,
-            name: user.name,
-            email: user.email,
-            photoUrl: user.photoUrl,
-          ));
-    } catch (e) {
-      ref.read(authProvider.notifier).setLoading(false);
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Login failed: ${e.toString()}')),
-        );
-      }
-    }
-  }
-
-  Future<void> _loginWithApple(BuildContext context) async {
-    // TODO: Apple sign in
+  void _loginWithApple() {
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(content: Text('Apple login coming soon')),
     );
